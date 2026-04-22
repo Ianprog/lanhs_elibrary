@@ -353,344 +353,90 @@ table tr:hover td { background: #fef9f9; }
 }
 
 /* ── Reader overlay ──────────────────────────────────────────── */
-.reader-overlay {
-  position: fixed; inset: 0; background: #2b2b2b;
-  z-index: 999; display: none; flex-direction: column;
-}
-.reader-overlay.open { display: flex; }
-.reader-top {
-  background: var(--red); color: #fff; padding: 12px 20px;
-  display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-.reader-top h3 { font-size: 14px; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.reader-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.r-btn {
-  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-  color: #fff; border-radius: 6px; padding: 6px 12px;
-  font-size: 11px; font-weight: 600; transition: all 0.18s;
-}
-.r-btn:hover { background: rgba(255,255,255,0.28); }
-.r-btn.active { background: rgba(255,255,255,0.9); color: var(--red); }
-.zoom-val { font-size: 12px; font-weight: 600; min-width: 36px; text-align: center; color: #fff; }
-.reader-tts-bar {
-  background: rgba(0,0,0,0.7); padding: 7px 20px;
-  display: none; align-items: center; gap: 12px;
-}
-.reader-tts-bar.on { display: flex; }
-.tts-track { flex: 1; height: 4px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
-.tts-fill  { height: 100%; background: #4CAF50; width: 0%; border-radius: 3px; transition: width 0.4s; }
-.reader-body {
-  flex: 1;
-  overflow: auto;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  background: #525659;
-  /* critical: give it a definite height so iframe fills it */
-  min-height: 0;
-  padding: 30px;
-}
-/* When showing a PDF iframe, remove padding so it fills edge-to-edge */
-.reader-body:has(iframe) {
-  padding: 0;
-  align-items: stretch;
-}
-.reader-page {
-  max-width: 680px; width: 100%; background: #fff;
-  border-radius: 4px; padding: 48px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  font-family: 'Montserrat', sans-serif; position: relative;
-  transition: font-size 0.2s;
-  /* allow page to grow taller than the viewport */
-  align-self: flex-start;
-}
-.reader-page h2 { font-size: 20px; font-weight: 700; color: var(--red); margin-bottom: 16px; border-bottom: 2px solid var(--red-soft); padding-bottom: 8px; }
-.reader-page p  { font-size: 14px; line-height: 1.9; margin-bottom: 15px; color: #333; }
-.reader-watermark {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0.04;
-  background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(214,40,40,0.4) 10px, rgba(214,40,40,0.4) 20px);
-}
-/* PDF iframe: fill the full reader-body */
-.reader-iframe {
-  width: 100%;
-  height: 100%;
-  min-height: calc(100vh - 120px);
-  border: none;
-  display: block;
-  flex: 1;
-}
-
-/* ── Login page ──────────────────────────────────────────────── */
-.login-page { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 10%, #fff2ef, transparent 55%), radial-gradient(circle at 80% 20%, #ffe4df, transparent 45%), #fff7f5; }
-.login-topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 6%; flex-wrap: wrap; gap: 12px; }
-.login-brand  { display: flex; align-items: center; gap: 12px; }
-.login-brand-ico { width: 46px; height: 46px; border-radius: 50%; background: var(--red); display: flex; align-items: center; justify-content: center; font-size: 21px; color: #fff; }
-.login-brand-title { font-weight: 700; font-size: 15px; color: var(--red); }
-.login-brand-sub   { font-size: 10px; color: #7c6b6a; text-transform: uppercase; letter-spacing: 0.1em; }
-.auth-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px 20px; }
-.auth-box { display: flex; width: 720px; max-width: 100%; border-radius: 22px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.14); }
-.auth-left { flex: 1; background: linear-gradient(145deg, #d62828, #8b0000); padding: 44px 36px; display: flex; flex-direction: column; justify-content: center; color: #fff; }
-.auth-left h2 { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 12px; line-height: 1.2; }
-.auth-left p  { font-size: 13px; line-height: 1.65; opacity: 0.85; }
-.auth-left-features { margin-top: 24px; display: flex; flex-direction: column; gap: 9px; }
-.auth-feat { display: flex; align-items: center; gap: 9px; font-size: 12px; }
-.auth-feat-icon { width: 28px; height: 28px; background: rgba(255,255,255,0.15); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-.auth-right { flex: 1; background: #fff; padding: 44px 36px; }
-.auth-right h3 { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
-.auth-right .sub { font-size: 12px; color: var(--gray); margin-bottom: 26px; }
-.auth-right .form-group { margin-bottom: 14px; }
-.auth-right label { font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 5px; }
-.auth-right input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 13px; outline: none; transition: border 0.2s, box-shadow 0.2s; }
-.auth-right input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(214,40,40,0.08); }
-.auth-submit { width: 100%; padding: 12px; background: var(--red); color: #fff; border: none; border-radius: var(--radius); font-size: 13px; font-weight: 700; letter-spacing: 0.04em; margin-top: 6px; transition: background 0.2s; }
-.auth-submit:hover { background: var(--red-dark); }
-.auth-toggle-link { text-align: center; margin-top: 16px; font-size: 12px; color: var(--gray); }
-.auth-toggle-link a { color: var(--red); font-weight: 600; }
-.auth-note { background: #f8f9fa; border-radius: var(--radius); padding: 10px 13px; font-size: 11px; color: var(--gray); margin-top: 14px; border: 1px solid var(--border); }
-
-/* ── Scrollbar ───────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
-
-/* ── Responsive ──────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .sidebar { display: none; }
-  .books-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-  .form-grid  { grid-template-columns: 1fr; }
-  .dash-row   { grid-template-columns: 1fr; }
-  .auth-left  { display: none; }
-  .auth-box   { border-radius: 0; min-height: 100vh; }
-  .page-header { gap: 10px; }
-  .header-search { max-width: 100%; }
-}
-
 /* ============================================================
-   SVG Icon styles (replaces emoji icons)
+   READER — Single clean definition (no duplicates)
    ============================================================ */
 
-/* Sidebar nav icons */
-.nav-icon {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  vertical-align: middle;
-  flex-shrink: 0;
-}
-
-/* Sidebar item icon wrapper */
-.sb-item-icon {
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sb-item .nav-icon {
-  stroke: currentColor;
-  fill: none;
-}
-
-/* Sidebar logo icon */
-.sb-logo-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--red);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.sb-logo-icon img {
-  width: 22px;
-  height: 22px;
-  filter: brightness(10);  /* make SVG white on red bg */
-}
-
-/* Logout icon in sidebar */
-.sb-logout .nav-icon {
-  width: 15px;
-  height: 15px;
-  stroke: rgba(255,255,255,0.28);
-  transition: stroke 0.2s;
-}
-.sb-logout:hover .nav-icon {
-  stroke: #ff5252;
-}
-
-/* Search icon in header */
-.search-icon {
-  display: flex;
-  align-items: center;
-}
-.search-icon .nav-icon {
-  stroke: #aaa;
-  fill: none;
-}
-
-/* Feature icons on login left panel */
-.auth-feat-icon {
-  width: 28px;
-  height: 28px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.auth-feat-icon svg {
-  width: 14px;
-  height: 14px;
-}
-.feat-svg {
-  width: 14px;
-  height: 14px;
-  stroke: rgba(255,255,255,0.85);
-  fill: none;
-}
-
-/* Login brand logo */
-.login-brand-ico {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: var(--red);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.login-brand-ico img {
-  width: 26px;
-  height: 26px;
-  filter: brightness(10);
-}
-
-/* Book card PDF badge (text, no emoji) */
-.book-pdf-tag {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  letter-spacing: 0.06em;
-}
-
-/* Book cover subject icon */
-.book-cover-svg {
-  width: 52px;
-  height: 52px;
-  stroke: rgba(0,0,0,0.18);
-  fill: none;
-}
-
-/* Alert icons */
-.alert-success::before { content: '✓ '; font-weight: 700; }
-.alert-error::before   { content: '✕ '; font-weight: 700; }
-
-/* Announcement/note card remove link (no emoji) */
-.remove-link {
-  color: #dc3545;
-  font-size: 11px;
-  font-weight: 600;
-  border: 1px solid #fca5a5;
-  border-radius: 5px;
-  padding: 2px 8px;
-  transition: all 0.15s;
-  text-decoration: none;
-}
-.remove-link:hover {
-  background: #dc3545;
-  color: #fff;
-}
-
-/* ============================================================
-   READER FIXES — PDF iframe full height + spinner + TTS
-   ============================================================ */
-
-/* Reader overlay must fill viewport completely */
+/* Overlay: fixed, full viewport, flex column */
 .reader-overlay {
-  position: fixed !important;
-  top: 0 !important; left: 0 !important;
-  right: 0 !important; bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   background: #1e1e1e;
   z-index: 9999;
   display: none;
   flex-direction: column;
+  overflow: hidden;
 }
-.reader-overlay.open { display: flex !important; }
+.reader-overlay.open {
+  display: flex;
+}
 
-/* Reader header */
+/* Header bar */
 .reader-top {
   background: var(--red);
   color: #fff;
-  padding: 0 20px;
-  height: 56px;
+  padding: 0 18px;
+  height: 54px;
+  min-height: 54px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
 }
 .reader-top h3 {
+  flex: 1;
   font-size: 14px;
   font-weight: 600;
-  flex: 1;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .reader-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-shrink: 0;
-  flex-wrap: wrap;
 }
 .r-btn {
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.28);
   color: #fff;
   border-radius: 7px;
-  padding: 7px 14px;
+  padding: 7px 13px;
   font-size: 12px;
   font-weight: 600;
   font-family: 'Sora', sans-serif;
   cursor: pointer;
-  transition: background 0.15s;
   white-space: nowrap;
+  transition: background .15s;
 }
-.r-btn:hover    { background: rgba(255,255,255,0.3); }
-.r-btn.active   { background: rgba(255,255,255,0.92); color: var(--red); }
+.r-btn:hover  { background: rgba(255,255,255,.28); }
+.r-btn.active { background: rgba(255,255,255,.92); color: var(--red); }
 .zoom-val {
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255,255,255,0.85);
-  min-width: 42px;
+  color: rgba(255,255,255,.85);
+  min-width: 40px;
   text-align: center;
 }
 
-/* TTS bar */
+/* TTS progress bar */
 .reader-tts-bar {
-  background: rgba(0,0,0,0.75);
-  padding: 8px 20px;
-  flex-shrink: 0;
   display: none;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  background: rgba(0,0,0,.72);
+  padding: 7px 18px;
+  flex-shrink: 0;
 }
 .reader-tts-bar.on { display: flex; }
 .tts-track {
   flex: 1;
   height: 4px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,.2);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -699,22 +445,21 @@ table tr:hover td { background: #fef9f9; }
   background: #4ade80;
   width: 0%;
   border-radius: 3px;
-  transition: width 0.4s;
+  transition: width .4s;
 }
 
-/* Reader body — THIS IS THE KEY FIX for PDF */
+/* Body — key: flex:1 + min-height:0 so it fills remaining space */
 .reader-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: #525659;
   position: relative;
 }
 
-/* PDF iframe fills 100% of reader-body */
+/* PDF iframe — must fill 100% of reader-body */
 #pdf-frame {
   flex: 1;
   width: 100%;
@@ -724,32 +469,36 @@ table tr:hover td { background: #fef9f9; }
   background: #fff;
 }
 
-/* Text reader page (non-PDF) */
-.reader-body-scroll {
+/* Text scroll container */
+.reader-scroll {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 32px 20px;
   display: flex;
   justify-content: center;
   background: #525659;
 }
+
+/* Text page */
 .reader-page {
   max-width: 720px;
   width: 100%;
   background: #fff;
   border-radius: 6px;
-  padding: 52px 56px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+  padding: 48px 52px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.35);
   font-family: 'Montserrat', sans-serif;
   position: relative;
   align-self: flex-start;
   line-height: 1.9;
+  transition: font-size .2s;
 }
 .reader-page h2 {
   font-size: 20px;
   font-weight: 700;
   color: var(--red);
-  margin: 24px 0 14px;
+  margin: 22px 0 14px;
   border-bottom: 2px solid var(--red-soft);
   padding-bottom: 8px;
 }
@@ -764,32 +513,54 @@ table tr:hover td { background: #fef9f9; }
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.03;
+  opacity: .03;
+  border-radius: 6px;
   background: repeating-linear-gradient(
     45deg, transparent, transparent 10px,
-    rgba(214,40,40,0.5) 10px, rgba(214,40,40,0.5) 20px
+    rgba(214,40,40,.5) 10px, rgba(214,40,40,.5) 20px
   );
-  border-radius: 6px;
+}
+
+/* Hint bar */
+.reader-hint {
+  font-size: 10px;
+  color: rgba(255,255,255,.3);
+  text-align: center;
+  padding: 5px 20px;
+  background: rgba(0,0,0,.5);
+  flex-shrink: 0;
+  letter-spacing: .04em;
 }
 
 /* Loading spinner */
 .reader-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255,255,255,0.15);
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(255,255,255,.12);
   border-top-color: var(--red);
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Keyboard hint */
-.reader-hint {
-  font-size: 10px;
-  color: rgba(255,255,255,0.35);
-  padding: 4px 20px;
-  background: rgba(0,0,0,0.5);
-  flex-shrink: 0;
-  text-align: center;
-  letter-spacing: 0.04em;
-}
+/* ── SVG icons ─────────────────────────────────────────────── */
+.nav-icon { width: 16px; height: 16px; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.sb-item .nav-icon { stroke: currentColor; fill: none; }
+.sb-item-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+.sb-logo-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--red); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sb-logo-icon img { width: 22px; height: 22px; filter: brightness(10); }
+.sb-logout .nav-icon { width: 15px; height: 15px; stroke: rgba(255,255,255,0.28); transition: stroke 0.2s; }
+.sb-logout:hover .nav-icon { stroke: #ff5252; }
+.search-icon { display: flex; align-items: center; }
+.search-icon .nav-icon { stroke: #aaa; fill: none; }
+.auth-feat-icon { width: 28px; height: 28px; background: rgba(255,255,255,0.15); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.auth-feat-icon svg { width: 14px; height: 14px; }
+.feat-svg { width: 14px; height: 14px; stroke: rgba(255,255,255,0.85); fill: none; }
+.login-brand-ico { width: 46px; height: 46px; border-radius: 50%; background: var(--red); display: flex; align-items: center; justify-content: center; }
+.login-brand-ico img { width: 26px; height: 26px; filter: brightness(10); }
+.book-pdf-tag { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.5); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.06em; }
+.book-cover-svg { width: 52px; height: 52px; stroke: rgba(0,0,0,0.18); fill: none; }
+.alert-success::before { content: ''; font-weight: 700; }
+.alert-error::before   { content: ''; font-weight: 700; }
+.remove-link { color: #dc3545; font-size: 11px; font-weight: 600; border: 1px solid #fca5a5; border-radius: 5px; padding: 2px 8px; transition: all .15s; text-decoration: none; }
+.remove-link:hover { background: #dc3545; color: #fff; }

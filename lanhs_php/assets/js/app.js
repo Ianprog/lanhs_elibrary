@@ -1,91 +1,108 @@
-// ============================================================
-//  LANHS eLibrary — app.js
-//  Full reader: PDF iframe + text reader + TTS + Zoom
-// ============================================================
-'use strict';
+/* ============================================================
+   LANHS eLibrary — app.js
+   Simple, reliable, no arrow functions, ES5-compatible
+   ============================================================ */
 
-// ── State ─────────────────────────────────────────────────────
-var readerZoom    = 100;
-var ttsRunning    = false;
-var ttsUtterance  = null;
-var currentBookId = null;
-var isPdfMode     = false;
+/* ── Reader state ─────────────────────────────────────────── */
+var READER_ZOOM   = 100;
+var TTS_RUNNING   = false;
+var TTS_UTT       = null;
+var IS_PDF_MODE   = false;
 
-// ── Open Reader ───────────────────────────────────────────────
+/* ── Open reader ──────────────────────────────────────────── */
 function openReader(bookId, title, hasPdf) {
-  currentBookId = bookId;
-  isPdfMode     = hasPdf;
+  IS_PDF_MODE = hasPdf;
+  READER_ZOOM = 100;
 
   var overlay = document.getElementById('reader-overlay');
-  var rTitle  = document.getElementById('r-title');
   var body    = document.getElementById('reader-body');
+  var rtitle  = document.getElementById('r-title');
+  var rzoom   = document.getElementById('r-zoom');
   var ttsBtn  = document.getElementById('r-tts-btn');
   var zoomOut = document.getElementById('r-zoom-out');
   var zoomIn  = document.getElementById('r-zoom-in');
 
-  if (!overlay || !body) return;
+  if (!overlay || !body) {
+    alert('Reader not found on page. Please reload.');
+    return;
+  }
 
   stopTTS();
-  rTitle.textContent = title;
-  readerZoom = 100;
-  document.getElementById('r-zoom').textContent = '100%';
-  overlay.classList.add('open');
+
+  rtitle.textContent    = title;
+  rzoom.textContent     = '100%';
+  overlay.className     = 'reader-overlay open';
   document.body.style.overflow = 'hidden';
 
-  // Loading state
+  /* Loading spinner */
   body.innerHTML =
-    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;'
-  + 'height:100%;color:#ccc;font-family:Sora,sans-serif;gap:16px;">'
+    '<div style="display:flex;flex-direction:column;align-items:center;'
+  + 'justify-content:center;height:100%;gap:18px;">'
   + '<div class="reader-spinner"></div>'
-  + '<div style="font-size:13px;">Loading <strong style="color:#fff;">' + title + '</strong>…</div>'
+  + '<div style="color:rgba(255,255,255,.7);font-size:13px;font-family:Sora,sans-serif;">'
+  + 'Opening <strong style="color:#fff;">' + title + '</strong>…</div>'
   + '</div>';
 
   if (hasPdf) {
-    // ── PDF mode: iframe ──────────────────────────────────────
+    /* ── PDF mode ─────────────────────────────────────────── */
     if (ttsBtn)  ttsBtn.style.display  = 'none';
     if (zoomOut) zoomOut.style.display = 'none';
     if (zoomIn)  zoomIn.style.display  = 'none';
-    document.getElementById('r-zoom').style.display = 'none';
+    rzoom.style.display = 'none';
 
+    /* Small delay lets browser paint the spinner first */
     setTimeout(function() {
-      body.innerHTML =
-        '<iframe id="pdf-frame" '
-      + 'src="serve_pdf.php?id=' + bookId + '" '
-      + 'style="width:100%;height:100%;border:none;display:block;background:#fff;" '
-      + 'allowfullscreen>'
-      + '<p style="color:#fff;padding:40px;text-align:center;">'
-      + 'Your browser cannot display PDFs inline. '
-      + '<a href="serve_pdf.php?id=' + bookId + '" target="_blank" style="color:#f87171;">Open PDF</a>'
-      + '</p>'
-      + '</iframe>';
-    }, 300);
+      /* Build the iframe directly — no innerHTML trick */
+      var iframe     = document.createElement('iframe');
+      iframe.id      = 'pdf-frame';
+      iframe.src     = 'serve_pdf.php?id=' + bookId;
+      iframe.title   = title;
+      iframe.style.cssText = 'flex:1;width:100%;height:100%;border:none;display:block;background:#fff;';
+
+      iframe.onerror = function() {
+        body.innerHTML =
+          '<div style="color:#f87171;text-align:center;padding:60px;font-family:Sora,sans-serif;">'
+        + '<div style="font-size:42px;margin-bottom:16px;">⚠️</div>'
+        + '<div style="font-size:14px;margin-bottom:12px;">Could not load PDF.</div>'
+        + '<a href="serve_pdf.php?id=' + bookId + '" target="_blank" '
+        + '   style="background:#d62828;color:#fff;padding:10px 24px;border-radius:8px;'
+        + '          text-decoration:none;font-size:13px;font-weight:600;">Open in new tab</a>'
+        + '</div>';
+      };
+
+      body.innerHTML = '';
+      body.appendChild(iframe);
+    }, 250);
 
   } else {
-    // ── Text mode ─────────────────────────────────────────────
-    if (ttsBtn)  { ttsBtn.style.display  = ''; ttsBtn.textContent = 'Read Aloud'; }
+    /* ── Text mode ────────────────────────────────────────── */
+    if (ttsBtn)  { ttsBtn.style.display  = '';  ttsBtn.textContent = 'Read Aloud'; }
     if (zoomOut) zoomOut.style.display = '';
     if (zoomIn)  zoomIn.style.display  = '';
-    document.getElementById('r-zoom').style.display = '';
+    rzoom.style.display = '';
 
     fetch('get_book_content.php?id=' + bookId)
-      .then(function(r) { return r.json(); })
+      .then(function(r) {
+        if (!r.ok) throw new Error('Server returned ' + r.status);
+        return r.json();
+      })
       .then(function(data) {
         var page = document.createElement('div');
         page.className = 'reader-page';
         page.id        = 'reader-page';
-        page.style.fontSize = readerZoom + '%';
+        page.style.fontSize = READER_ZOOM + '%';
 
         var wm = document.createElement('div');
         wm.className = 'reader-watermark';
         page.appendChild(wm);
 
-        var content = (data && data.content) ? data.content : '';
+        var content = (data && data.content) ? String(data.content) : '';
         if (content.trim()) {
           var blocks = content.split(/\n{2,}/);
           for (var i = 0; i < blocks.length; i++) {
             var block = blocks[i].trim();
             if (!block) continue;
-            if (/^(Chapter\s|Kabanata\s|CHAPTER\s|KABANATA\s|Aralin\s)/i.test(block)) {
+            if (/^(Chapter\s|Kabanata\s|Aralin\s|CHAPTER\s)/i.test(block)) {
               var h = document.createElement('h2');
               h.textContent = block;
               page.appendChild(h);
@@ -102,83 +119,87 @@ function openReader(bookId, title, hasPdf) {
           }
         } else {
           var msg = document.createElement('p');
-          msg.style.color = '#999';
-          msg.textContent = 'No content available. Ask your teacher or admin to upload the PDF for this book.';
+          msg.style.color  = '#999';
+          msg.style.textAlign = 'center';
+          msg.style.padding = '40px';
+          msg.textContent = 'No text content available. Ask your teacher or admin to upload the PDF for this book.';
           page.appendChild(msg);
         }
 
-        var scrollWrap = document.createElement('div');
-        scrollWrap.style.cssText = 'flex:1;overflow-y:auto;padding:32px 20px;display:flex;justify-content:center;background:#525659;';
-        scrollWrap.appendChild(page);
+        var scroll = document.createElement('div');
+        scroll.className = 'reader-scroll';
+        scroll.appendChild(page);
+
         body.innerHTML = '';
-        body.appendChild(scrollWrap);
+        body.appendChild(scroll);
       })
-      .catch(function() {
+      .catch(function(err) {
         body.innerHTML =
-          '<div class="reader-page" id="reader-page">'
+          '<div class="reader-scroll"><div class="reader-page" id="reader-page">'
         + '<div class="reader-watermark"></div>'
-        + '<p style="color:#999;text-align:center;padding:40px;">Could not load content. Please check your connection and try again.</p>'
-        + '</div>';
+        + '<p style="color:#999;text-align:center;">Could not load content: ' + err.message + '</p>'
+        + '</div></div>';
       });
   }
 }
 
-// ── Close reader ──────────────────────────────────────────────
+/* ── Close reader ─────────────────────────────────────────── */
 function closeReader() {
   stopTTS();
   var overlay = document.getElementById('reader-overlay');
   var body    = document.getElementById('reader-body');
-  if (overlay) overlay.classList.remove('open');
-  if (body)    body.innerHTML = '';
-  document.body.style.overflow = '';
-  currentBookId = null;
+  if (overlay) overlay.className = 'reader-overlay';
+  if (body)    body.innerHTML    = '';
+  document.body.style.overflow   = '';
+  IS_PDF_MODE = false;
 }
 
-// ── Zoom (text mode only) ─────────────────────────────────────
+/* ── Zoom ─────────────────────────────────────────────────── */
 function zoomIn() {
-  readerZoom = Math.min(200, readerZoom + 15);
+  READER_ZOOM = Math.min(200, READER_ZOOM + 15);
   applyZoom();
 }
 function zoomOut() {
-  readerZoom = Math.max(70, readerZoom - 15);
+  READER_ZOOM = Math.max(70, READER_ZOOM - 15);
   applyZoom();
 }
 function applyZoom() {
-  document.getElementById('r-zoom').textContent = readerZoom + '%';
+  var el = document.getElementById('r-zoom');
+  if (el) el.textContent = READER_ZOOM + '%';
   var page = document.getElementById('reader-page');
-  if (page) page.style.fontSize = readerZoom + '%';
+  if (page) page.style.fontSize = READER_ZOOM + '%';
 }
 
-// ── TTS ───────────────────────────────────────────────────────
+/* ── TTS ──────────────────────────────────────────────────── */
 function toggleTTS() {
-  if (ttsRunning) { stopTTS(); return; }
+  if (TTS_RUNNING) { stopTTS(); return; }
   if (!window.speechSynthesis) {
     showToast('Text-to-speech is not supported in this browser.');
     return;
   }
   var page = document.getElementById('reader-page');
-  if (!page) { showToast('No text to read.'); return; }
+  if (!page) { showToast('Open a text book first.'); return; }
   var text = (page.innerText || page.textContent || '').trim();
-  if (!text) { showToast('No readable text found.'); return; }
+  if (!text) { showToast('No text found to read aloud.'); return; }
 
-  ttsUtterance        = new SpeechSynthesisUtterance(text);
-  ttsUtterance.rate   = 0.88;
-  ttsUtterance.pitch  = 1.0;
-  ttsUtterance.volume = 1.0;
-  ttsUtterance.lang   = 'en-PH';
+  TTS_UTT         = new SpeechSynthesisUtterance(text);
+  TTS_UTT.rate    = 0.88;
+  TTS_UTT.pitch   = 1;
+  TTS_UTT.volume  = 1;
+  TTS_UTT.lang    = 'en-PH';
 
-  ttsUtterance.onstart = function() {
-    ttsRunning = true;
+  TTS_UTT.onstart = function() {
+    TTS_RUNNING = true;
     var btn = document.getElementById('r-tts-btn');
     var bar = document.getElementById('reader-tts-bar');
     if (btn) { btn.classList.add('active'); btn.textContent = 'Stop Reading'; }
     if (bar) bar.classList.add('on');
-    animateTTS();
+    tickTTS();
   };
-  ttsUtterance.onend = function() { cleanupTTS(); };
-  ttsUtterance.onerror = function() { cleanupTTS(); };
+  TTS_UTT.onend   = function() { cleanupTTS(); };
+  TTS_UTT.onerror = function(e) { cleanupTTS(); };
 
-  window.speechSynthesis.speak(ttsUtterance);
+  window.speechSynthesis.speak(TTS_UTT);
 }
 
 function stopTTS() {
@@ -187,7 +208,8 @@ function stopTTS() {
 }
 
 function cleanupTTS() {
-  ttsRunning = false;
+  TTS_RUNNING = false;
+  TTS_UTT     = null;
   var btn  = document.getElementById('r-tts-btn');
   var bar  = document.getElementById('reader-tts-bar');
   var fill = document.getElementById('tts-fill');
@@ -196,74 +218,82 @@ function cleanupTTS() {
   if (fill) fill.style.width = '0%';
 }
 
-function animateTTS() {
-  if (!ttsRunning) return;
+function tickTTS() {
+  if (!TTS_RUNNING) return;
   var fill = document.getElementById('tts-fill');
   if (fill) {
     var w = parseFloat(fill.style.width) || 0;
     fill.style.width = Math.min(99, w + 0.03) + '%';
   }
-  requestAnimationFrame(animateTTS);
+  requestAnimationFrame(tickTTS);
 }
 
-// ── Favorites ─────────────────────────────────────────────────
+/* ── Favorites ────────────────────────────────────────────── */
 function toggleFavorite(bookId, btn) {
   btn.disabled = true;
   var fd = new FormData();
   fd.append('book_id', bookId);
   fetch('toggle_favorite.php', { method: 'POST', body: fd })
     .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(function(d) {
       btn.disabled = false;
-      var isSaved = data.action === 'added';
-      if (isSaved) {
+      if (d.action === 'added') {
         btn.classList.add('saved');
-        btn.innerHTML = document.getElementById('heart-filled-svg') ?
-          document.getElementById('heart-filled-svg').innerHTML : '♥';
-        showToast('Added to favorites!');
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
+          + 'fill="currentColor" stroke="currentColor" stroke-width="1" '
+          + 'class="nav-icon"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67'
+          + 'l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78'
+          + '1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+        showToast('Added to favorites!', 'success');
       } else {
         btn.classList.remove('saved');
-        btn.innerHTML = document.getElementById('heart-outline-svg') ?
-          document.getElementById('heart-outline-svg').innerHTML : '♡';
-        showToast('Removed from favorites.');
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
+          + 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+          + 'stroke-linejoin="round" class="nav-icon"><path d="M20.84 4.61a5.5 5.5 0 0 0'
+          + '-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23'
+          + 'l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+        showToast('Removed from favorites.', 'success');
       }
     })
     .catch(function() {
       btn.disabled = false;
-      showToast('Could not update favorites. Please try again.');
+      showToast('Could not update. Please try again.', 'error');
     });
 }
 
-// ── Toast ─────────────────────────────────────────────────────
-var toastTimer;
+/* ── Toast ────────────────────────────────────────────────── */
+var TOAST_TIMER = null;
 function showToast(msg, type) {
   var t = document.getElementById('app-toast');
   if (!t) {
     t = document.createElement('div');
     t.id = 'app-toast';
-    document.body.appendChild(t);
     t.style.cssText =
       'position:fixed;bottom:24px;right:24px;max-width:300px;'
     + 'border-radius:10px;padding:12px 18px;font-size:13px;font-weight:500;'
-    + 'z-index:99999;font-family:Sora,sans-serif;'
-    + 'box-shadow:0 6px 20px rgba(0,0,0,0.2);'
-    + 'transform:translateY(80px);opacity:0;'
-    + 'transition:transform 0.3s ease,opacity 0.3s ease;';
+    + 'z-index:99999;font-family:Sora,sans-serif;color:#fff;'
+    + 'box-shadow:0 6px 20px rgba(0,0,0,.25);'
+    + 'transform:translateY(90px);opacity:0;'
+    + 'transition:transform .3s ease,opacity .3s ease;pointer-events:none;';
+    document.body.appendChild(t);
   }
-  var bg = (type === 'error') ? '#dc3545' : (type === 'success' ? '#28a745' : '#2f2f2f');
-  t.style.background = bg;
-  t.style.color = '#fff';
+  t.style.background = (type === 'error') ? '#dc3545' : (type === 'success' ? '#28a745' : '#2f2f2f');
   t.textContent = msg;
   t.style.transform = 'translateY(0)';
   t.style.opacity   = '1';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function() {
-    t.style.transform = 'translateY(80px)';
+  clearTimeout(TOAST_TIMER);
+  TOAST_TIMER = setTimeout(function() {
+    t.style.transform = 'translateY(90px)';
     t.style.opacity   = '0';
   }, 3500);
 }
 
-// ── Notepad ───────────────────────────────────────────────────
+/* ── confirmDelete ────────────────────────────────────────── */
+function confirmDelete(msg) {
+  return confirm(msg || 'Are you sure you want to delete this?');
+}
+
+/* ── Notepad ──────────────────────────────────────────────── */
 function initNotepad() {
   var ta = document.getElementById('notepad-ta');
   if (!ta) return;
@@ -275,7 +305,7 @@ function initNotepad() {
     localStorage.setItem(key, ta.value);
     var s = document.getElementById('np-status');
     if (s) {
-      s.textContent = 'Auto-saved';
+      s.textContent = 'Saved';
       clearTimeout(s._t);
       s._t = setTimeout(function() { s.textContent = ''; }, 2000);
     }
@@ -285,51 +315,45 @@ function initNotepad() {
 function npFormat(pre, suf) {
   var ta = document.getElementById('notepad-ta');
   if (!ta) return;
-  var s   = ta.selectionStart, e = ta.selectionEnd;
-  var sel = ta.value.substring(s, e);
-  ta.value = ta.value.substring(0, s) + pre + sel + suf + ta.value.substring(e);
-  ta.setSelectionRange(s + pre.length, s + pre.length + sel.length);
+  var s = ta.selectionStart, e = ta.selectionEnd;
+  ta.value = ta.value.substring(0, s) + pre + ta.value.substring(s, e) + suf + ta.value.substring(e);
+  ta.setSelectionRange(s + pre.length, s + pre.length + (e - s));
   ta.focus();
   ta.dispatchEvent(new Event('input'));
 }
 
 function npClear() {
-  if (!confirm('Clear all notepad content? This cannot be undone.')) return;
+  if (!confirm('Clear all notepad content?')) return;
   var ta = document.getElementById('notepad-ta');
   if (ta) { ta.value = ''; ta.dispatchEvent(new Event('input')); ta.focus(); }
 }
 
-// ── Auto-dismiss alerts ───────────────────────────────────────
+/* ── Auto-dismiss alerts ──────────────────────────────────── */
 function initAlerts() {
   var alerts = document.querySelectorAll('.alert');
   for (var i = 0; i < alerts.length; i++) {
     (function(el) {
       setTimeout(function() {
-        el.style.transition = 'opacity 0.5s';
-        el.style.opacity = '0';
+        el.style.transition = 'opacity .5s';
+        el.style.opacity    = '0';
         setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 520);
       }, 5000);
-    })(alerts[i]);
+    }(alerts[i]));
   }
 }
 
-// ── Confirm delete ────────────────────────────────────────────
-function confirmDelete(msg) {
-  return confirm(msg || 'Are you sure you want to delete this?');
-}
-
-// ── Keyboard shortcuts ────────────────────────────────────────
+/* ── Keyboard shortcuts ───────────────────────────────────── */
 document.addEventListener('keydown', function(e) {
   var overlay = document.getElementById('reader-overlay');
-  if (!overlay || !overlay.classList.contains('open')) return;
-  if (e.key === 'Escape')    { closeReader(); }
-  if (e.key === '+' || e.key === '=') { if (!isPdfMode) zoomIn(); }
-  if (e.key === '-')          { if (!isPdfMode) zoomOut(); }
-  if (e.key === 'ArrowRight') { if (!isPdfMode) zoomIn(); }
-  if (e.key === 'ArrowLeft')  { if (!isPdfMode) zoomOut(); }
+  if (!overlay || overlay.className.indexOf('open') === -1) return;
+  if (e.key === 'Escape')            { closeReader(); return; }
+  if (!IS_PDF_MODE) {
+    if (e.key === '+' || e.key === '=') zoomIn();
+    if (e.key === '-')                  zoomOut();
+  }
 });
 
-// ── DOMContentLoaded ─────────────────────────────────────────
+/* ── Init ─────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function() {
   initNotepad();
   initAlerts();

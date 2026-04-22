@@ -10,7 +10,7 @@ function startSession(): void {
         // session_set_cookie_params array form requires PHP 7.3+
         // Use individual ini_set calls for PHP 7.2 compatibility
         ini_set('session.cookie_httponly', 1);
-        ini_set('session.cookie_samesite', 'Strict'); // PHP 7.3+, ignored on older
+        ini_set('session.cookie_samesite', 'Lax'); // Lax allows iframe same-site requests // PHP 7.3+, ignored on older
         ini_set('session.use_strict_mode',  1);
         ini_set('session.use_only_cookies', 1);
         ini_set('session.use_trans_sid',    0);
